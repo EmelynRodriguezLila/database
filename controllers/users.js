@@ -129,89 +129,85 @@ const addUser = async (req = request, res = response) => {
     }
     
 }
-//AQUI ESTA LA TAREA DE CARMONA
-/*
-//END POINT TAREA
-const tarea = async (req = request, res = response)=>{
+//AQUI ESTA LA TAREA DE CARMONA ENDPOINT MEJORADO 
 
-        const {id} = req.params;
+const updateUser = async (req = request, res = response) => {
+    let conn;
+    const {id} = req.params;
+    let user = [
+        username, 
+        email, 
+        password, 
+        name, 
+        lastname,
+        phone_number,
+        role_id,
+        is_active
+    ]
+            
+    
+    try{
+        conn = await pool.getConnection();
 
-        const {
-            username, 
-            email, 
-            password, 
-            name, 
-            lastname,
-            phone_number = '',
-            role_id,
-            is_active = 1
-        } =req.body;
+        const [userExists] = await conn.query(
+            usersModel.getByID,
+            [id],
+            (err) => { throw err; }
+        )
+        if(!userExists || userExists.is_active === 0){
+            res.status(404).json({msg: 'user not found'});
+            return;
+        }   
 
-
-        if (!username || !email || !password || !name || !lastname || !role_id){
-            res.status(400).json({msg: "Missing information"});
+        if(username=== userExists.username){
+            res.status(409).json({msg: 'Username alredy exists'});
             return;
         }
- 
-         let conn;
-    
-         try {
-            conn = await pool.getConnection();
-    
-            
-            const [tareaid] = await conn.query(
-                usersModel.getByID, 
-                [id],
-                (err)=>{if(err)throw err;});
-            
-            if (!tareaid) {
-                res.status(404).json({ msg: `User with id ${id} not found` });
-                return;
-            }
-
-            const [usernameUser] = await conn.query(
-                usersModel.getByUserName,
-                [username],
-                (err)=>{if(err)throw err;}
-            );
-            if (usernameUser){
-                res.status(409).json({msg: `User with username ${username} already exists`});
-                return;
-            }
-
-            const [emailUser] = await conn.query(
-                usersModel.getByEmail,
-                [email],
-                (err)=>{if(err)throw err;}
-            );
-            if (emailUser){
-                res.status(409).json({msg: `User with username ${email} already exists`});
-                return;
-            }
-    
-
-            const updateinfouser = await conn.query(
-                usersModel.tareaUpdate,
-                [username, email, password, name, lastname, phone_number, role_id, is_active, id]
-            );
-
-
-            if (updateinfouser.affectedRows === 0) {
-                res.status(404).json({msg: `Failed to modify user`})
-                return;
-            }
-            res.json({ msg: "User modified successfully" });
-            
-        } catch (error) {
-            console.error(error);
-            res.status(500).json(error);
-        } finally {
-            if (conn) conn.end();
+        if(email===userExists.email){
+            res.status(409).json({msg: 'Username alredy exists'});
+            return;
         }
+
+        let oldUser = [
+            userExists.username,
+            userExists.email,
+            userExists.password,
+            userExists.name,
+            userExists.lastname,
+            userExists.phone_number,
+            userExists.role_id,
+            userExists.is_active
+        ]
+
+        user.forEach((userData, index) => {
+            if (!userData){
+                user[index] = oldUser[index]
+            };
+    })
+    
+const  [userUpdated] = conn.query( 
+                                usersModel.updateRow,
+                                [...user],
+                                (err) => {
+                                    throw err;
+                                }
+    )
+    if (userUpdated.affectedRows === 0){
+        throw new Error('User not updated');
+    }
+
+    res.json({msg: 'User updated successfully'});
+
+    } catch(error){
+        console.log(error);
+        res.status(500).json(error);
+    } finally{
+        if(conn) conn.end()
+    }
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////12/10/2023
 //END POINT TAREA
-*/
+
 
 const deleteUser = async(req = request, res = response) =>{
     let conn;
@@ -251,4 +247,4 @@ const deleteUser = async(req = request, res = response) =>{
 }
 
 
-module.exports = { listUsers, listUserByID, addUser, deleteUser };
+module.exports = { listUsers, listUserByID, addUser, deleteUser, updateUser};
