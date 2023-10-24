@@ -33,7 +33,7 @@ const usersModel = {
         WHERE
             email = ?
     `,
-    updateUser:`
+    updateByID:`
         UPDATE Users
         SET username=?,
         email=?,
