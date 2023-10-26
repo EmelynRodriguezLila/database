@@ -273,5 +273,50 @@ const deleteUser = async(req = request, res = response) =>{
     }
 }
 
+const singInUser = async (req = request, res = response) => {
+    const {username, password} = req.body;
 
-module.exports = { listUsers, listUserByID, addUser, deleteUser, updateUser};
+    let conn;
+
+    try{
+        conn = await pool.getConnection();
+
+        const [user] = await conn.query(
+            usersModel.getByUsername,
+            [username],
+            (err) => {throw err;}
+        );
+        if(!user || user.is_active === 0){
+            res.status(404).json({msg: 'Wrong username or passwprd'});
+            return;
+        }
+
+
+        const passwordOk = await bcrypt.compare(password, user.password);
+        if(!passwordOk){
+            res.status(404).json({msg:'Wrong username or password'});
+            return;
+        }
+
+        delete user.password;
+        delete user.created_at;
+        delete user.updated_at;
+
+        res.json(user);
+    }catch (error){
+        console.log(error);
+        res.status(500).json(error);
+    }finally{
+        if(conn) conn.end();
+    }
+}
+
+
+module.exports = { 
+    listUsers, 
+    listUserByID, 
+    addUser, 
+    deleteUser, 
+    updateUser, 
+    singInUser
+};
