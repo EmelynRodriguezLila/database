@@ -286,8 +286,9 @@ const singInUser = async (req = request, res = response) => {
             [username],
             (err) => {throw err;}
         );
-        if(!user || user.is_active === 0){
-            res.status(404).json({msg: 'Wrong username or passwprd'});
+
+        if(!user || user.is_active===0){
+            res.status(404).json({msg: 'Wrong username or password'});
             return;
         }
 
